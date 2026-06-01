@@ -23,6 +23,9 @@ services:
       retries: 10
   backend:
     build:
-      context: ..
+      context: ../golang/
       dockerfile: backend/Dockerfile
       target: start
+    depends_on:
+      kafka:
+        condition: service_healthy
