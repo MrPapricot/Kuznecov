@@ -3,7 +3,6 @@ services:
     image: apache/kafka:latest
     container_name: kafka
     ports:
-      - "${KAFKA_PORT:?}:${KAFKA_PORT:?}"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -15,20 +14,44 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
     healthcheck:
       test: ["CMD", "opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "${KAFKA_HOST:?}:${KAFKA_PORT:?}", "--list"]
       interval: 5s
       timeout: 3s
       retries: 10
+  init_kafka:
+    image: apache/kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: |
+      "
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create  --if-not-exists --topic health_topic
+      "
+  auth_service:
+    environment:
+      KAFKA_HOST: ${KAFKA_HOST:?}
+      KAFKA_PORT: ${KAFKA_PORT:?}
+    build:
+      context: ../golang/
+      dockerfile: auth_service/Dockerfile
+      target: start
+    depends_on:
+      - init_kafka
+    environment:
+      MAIN_PORT: ${MAIN_PORT:?}
+      MAIN_HOST: ${MAIN_HOST:?}
+
+      AUTH_PORT: ${AUTH_PORT:?}
+      AUTH_HOST: ${AUTH_HOST:?}
   backend:
     build:
       context: ../golang/
       dockerfile: backend/Dockerfile
       target: start
     depends_on:
-      kafka:
-        condition: service_healthy
+      - init_kafka
     environment:
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"db_adapter"
+	db_adapter "db_adapter/src"
 	"fmt"
 )
 
@@ -20,9 +20,11 @@ func main() {
 	} else {
 		fmt.Println("Error connecting to Database", err)
 	}
-
 	_ = adapter
 
 	fmt.Println("Hello from auth service")
 	fmt.Println("Hello again")
+	for true {
+
+	}
 }
