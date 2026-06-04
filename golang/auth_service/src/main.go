@@ -1,11 +1,11 @@
 package main
 
 import (
-	"auth_service/src/utils"
 	"context"
 	db_adapter "db_adapter/src"
 	"fmt"
 	"time"
+	"utils"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -21,8 +21,8 @@ func main() {
 	db_host := utils.ReadEnv("DB_HOST", "kafka")
 	db_port := utils.ReadEnvU16("DB_PORT", 5432)
 
-	db_user := utils.ReadEnv("DB_SUPERUSER", "postgres")
-	db_user_password := utils.ReadEnv("DB_SUPERUSER_PASSWORD", "1234")
+	db_user := utils.ReadEnv("DB_USER", "postgres")
+	db_user_password := utils.ReadEnv("DB_USER_PASSWORD", "1234")
 
 	db_name := utils.ReadEnv("DB_NAME", "Kuznetsov")
 
@@ -38,12 +38,12 @@ func main() {
 	if err == nil {
 		fmt.Printf("Connected Successfully with options: %#v\n", connect_options)
 	} else {
-		fmt.Println("Error connecting to Database", err)
+		fmt.Printf("Error connecting to database with options %#v\nError is %#v\n", connect_options, err)
 		panic("Error connecting to DB")
 	}
 	_ = adapter
 
-	writer := kafka.NewWriter(kafka.WriterConfig{
+	health_writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:      []string{fmt.Sprintf("%s:%d", kafka_host, kafka_port)},
 		Topic:        health_topic,
 		Balancer:     &kafka.Hash{},
@@ -51,18 +51,14 @@ func main() {
 		WriteTimeout: time.Second * 10,
 	})
 
-	err = writer.WriteMessages(ctx, kafka.Message{
+	err = health_writer.WriteMessages(ctx, kafka.Message{
 		Key:   []byte("AUTH"),
 		Value: []byte("Active"),
 	})
 
 	if err != nil {
-		fmt.Printf("Error sending message %#v", err)
-	}
-
-	fmt.Println("Hello from auth service")
-	fmt.Println("Hello again")
-	for true {
-
+		fmt.Printf("Error sending health report %#v\n", err)
+	} else {
+		fmt.Println("Health report sent successfully")
 	}
 }

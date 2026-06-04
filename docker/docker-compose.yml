@@ -8,6 +8,8 @@ services:
       POSTGRES_DB: ${DB_NAME:?}
       DB_USER: ${DB_USER:?}
       DB_USER_PASSWORD: ${DB_USER_PASSWORD:?}
+    volumes:
+      - ../database/init_database.d:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_SUPERUSER:?}" ]
       interval: 5s
@@ -41,7 +43,9 @@ services:
     entrypoint: ["sh", "-c"]
     command: |
       "
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create  --if-not-exists --topic ${KAFKA_HEALTH_TOPIC:?}
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_HEALTH_TOPIC:?}
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_AUTH_REQUEST_TOPIC:?}
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_AUTH_RESPONSE_TOPIC:?}
       "
   auth_service:
     build:
@@ -62,8 +66,6 @@ services:
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}
 
-      DB_SUPERUSER: ${DB_SUPERUSER:?}
-      DB_SUPERUSER_PASSWORD: ${DB_SUPERUSER_PASSWORD:?}
       DB_USER: ${DB_USER:?}
       DB_USER_PASSWORD: ${DB_USER_PASSWORD:?}
       DB_NAME: ${DB_NAME:?}
@@ -78,6 +80,11 @@ services:
       init_kafka:
         condition: service_completed_successfully
     environment:
+      KAFKA_HOST: ${KAFKA_HOST:?}
+      KAFKA_PORT: ${KAFKA_PORT:?}
+
+      KAFKA_HEALTH_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
+
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}
 

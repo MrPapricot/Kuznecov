@@ -2,23 +2,40 @@ package main
 
 import (
 	"MainBackend/src/handlers"
+	"context"
+	"fmt"
 
-	db_adapter "db_adapter/src"
+	"utils"
 
 	"github.com/gofiber/fiber/v3"
-)
 
-type User struct {
-	name  string
-	email string
-}
+	"github.com/segmentio/kafka-go"
+)
 
 type Response struct {
 	Message string `json:"message"`
 }
 
 func main() {
-	_ = db_adapter.PostgresAdapter{}
+	ctx := context.Background()
+
+	kafka_host := utils.ReadEnv("KAFKA_HOST", "kafka")
+	kafka_port := utils.ReadEnvU16("KAFKA_PORT", 9092)
+
+	health_topic := utils.ReadEnv("KAFKA_HEALTH_TOPIC", "health")
+
+	health_reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{fmt.Sprintf("%s:%d", kafka_host, kafka_port)},
+		Topic:   health_topic,
+	})
+
+	message, err := health_reader.ReadMessage(ctx)
+
+	if err == nil {
+		fmt.Printf("Message read. Key: %s, Value: %s\n", message.Key, message.Value)
+	} else {
+		fmt.Printf("Error reading message: %#v\n", err)
+	}
 
 	app := fiber.New()
 

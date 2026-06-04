@@ -4,6 +4,9 @@ WORKDIR /usr/src/app
 
 COPY ./go.work ./
 
+COPY ./utils/go.mod ./utils/go.mod
+COPY ./utils/env_parser.go ./utils/env_parser.go
+
 COPY ./auth_service/go.mod ./auth_service/go.mod
 COPY ./auth_service/src ./auth_service/src
 
