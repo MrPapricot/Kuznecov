@@ -2,7 +2,10 @@ FROM golang:1.26.2 AS builder
 
 WORKDIR /usr/src/app
 
-COPY ./go.work ./
+COPY ./go.work ./go.work
+
+COPY ./shared/auth ./shared/auth
+COPY ./shared/go.mod ./shared/go.mod
 
 COPY ./utils/go.mod ./utils/go.mod
 COPY ./utils/env_parser.go ./utils/env_parser.go

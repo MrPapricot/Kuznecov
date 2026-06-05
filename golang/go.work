@@ -4,3 +4,4 @@ use ./backend
 use ./db_adapter
 use ./auth_service
 use ./utils
+use ./shared

@@ -44,8 +44,8 @@ services:
     command: |
       "
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_HEALTH_TOPIC:?}
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_AUTH_REQUEST_TOPIC:?}
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_AUTH_RESPONSE_TOPIC:?}
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_REQUEST_TOPIC:?}
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_RESPONSE_TOPIC:?}
       "
   auth_service:
     build:
@@ -62,6 +62,8 @@ services:
       KAFKA_PORT: ${KAFKA_PORT:?}
 
       KAFKA_HEALTH_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
+      KAFKA_REQUEST_TOPIC: ${KAFKA_REQUEST_TOPIC:?}
+      KAFKA_RESPONSE_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
 
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}
@@ -84,6 +86,8 @@ services:
       KAFKA_PORT: ${KAFKA_PORT:?}
 
       KAFKA_HEALTH_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
+      KAFKA_REQUEST_TOPIC: ${KAFKA_REQUEST_TOPIC:?}
+      KAFKA_RESPONSE_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
 
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}
