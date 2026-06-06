@@ -65,7 +65,7 @@ func main() {
 
 	timeout := 20 * time.Second
 
-	handler := handlers.NewHandler(kafka_client, timeout)
+	auth_handler := handlers.NewAuthHandler(kafka_client, timeout)
 
 	fmt.Println("All services started successfully")
 
@@ -73,19 +73,19 @@ func main() {
 	user_service_url := fmt.Sprintf("http://%s:%d", utils.ReadEnv("USER_HOST", "localhost"), utils.ReadEnvU16("USER_PORT", 8001))
 
 	user_service_client := user_client.NewUserServiceClient(user_service_url, user_service_timeout)
-	user_handlers := handlers.NewUserHandlers(user_service_client)
+	user_handler := handlers.NewUserHandler(user_service_client)
 
 	app := fiber.New(fiber.Config{AppName: "API Gateway"})
 
 	app.Get("/health", handlers.HealthHandler)
 
-	app.Post("/api/auth/register", handler.Register)
-	app.Post("/api/auth/login", handler.Login)
+	app.Post("/api/auth/register", auth_handler.Register)
+	app.Post("/api/auth/login", auth_handler.Login)
 
 	// User routes (через HTTP прокси к User Service)
-	app.Get("/api/user/info", user_handlers.GetUserInfoHandler)
-	app.Patch("/api/user/change-username", user_handlers.ChangeUsernameHandler)
-	app.Patch("/api/user/change-password", user_handlers.ChangePasswordHandler)
+	app.Get("/api/user/info", user_handler.GetUserInfoHandler)
+	app.Patch("/api/user/change-username", user_handler.ChangeUsernameHandler)
+	app.Patch("/api/user/change-password", user_handler.ChangePasswordHandler)
 
 	main_host := utils.ReadEnv("MAIN_HOST", "0.0.0.0")
 	main_port := utils.ReadEnvU16("MAIN_PORT", 8080)

@@ -10,7 +10,7 @@ type UserHandlers struct {
 	user_service_client *user_client.UserServiceClient
 }
 
-func NewUserHandlers(user_service_client *user_client.UserServiceClient) *UserHandlers {
+func NewUserHandler(user_service_client *user_client.UserServiceClient) *UserHandlers {
 	return &UserHandlers{
 		user_service_client: user_service_client,
 	}
