@@ -133,16 +133,68 @@ func (repository *UserRepository) ChangePassword(token string, old_password stri
 	return nil
 }
 
-func (repository *UserRepository) GetUserInfo(token string) (db_adapter.UserInfo, error) {
-	uuid, err := repository.get_uuid_from_token(token)
+func (repository *UserRepository) DeleteUser(token string, password string) error {
+	user_uuid, err := repository.get_uuid_from_token(token)
 	if err != nil {
-		if errors.Is(err, db_adapter.ErrUserNotFound) {
-			return db_adapter.UserInfo{}, NoUserFound
+		return err
+	}
+
+	// 1. Получаем текущий хеш пароля из БД
+	current_hash, err := repository.db.GetPasswordHash(user_uuid)
+	if err != nil {
+		switch {
+		case errors.Is(err, db_adapter.ErrUserNotFound):
+			return NoUserFound
+		case errors.Is(err, db_adapter.ErrDatabaseError):
+			return DatabaseError
+		default:
+			return err
 		}
-		if errors.Is(err, db_adapter.ErrDatabaseError) {
-			return db_adapter.UserInfo{}, DatabaseError
+	}
+
+	// 2. Проверяем старый пароль
+	is_valid, err := argon2id.ComparePasswordAndHash(password, current_hash)
+	if err != nil {
+		return fmt.Errorf("failed to compare password: %w", err)
+	}
+	if !is_valid {
+		return PasswordMissmath
+	}
+
+	err = repository.db.DeleteUser(user_uuid)
+	if err != nil {
+		switch {
+		case errors.Is(err, db_adapter.ErrUserNotFound):
+			return NoUserFound
+		case errors.Is(err, db_adapter.ErrTransactionError):
+			fallthrough
+		case errors.Is(err, db_adapter.ErrDatabaseError):
+			return DatabaseError
+		default:
+			return err
 		}
+	}
+
+	return nil
+}
+
+func (repository *UserRepository) GetUserInfo(token string) (db_adapter.UserInfo, error) {
+	user_uuid, err := repository.get_uuid_from_token(token)
+	if err != nil {
 		return db_adapter.UserInfo{}, err
 	}
-	return repository.db.GetUserInfo(uuid)
+
+	user_info, err := repository.db.GetUserInfo(user_uuid)
+	if err != nil {
+		switch {
+		case errors.Is(err, db_adapter.ErrUserNotFound):
+			return db_adapter.UserInfo{}, NoUserFound
+		case errors.Is(err, db_adapter.ErrDatabaseError):
+			return db_adapter.UserInfo{}, DatabaseError
+		default:
+			return db_adapter.UserInfo{}, err
+		}
+	}
+
+	return user_info, nil
 }

@@ -10,6 +10,7 @@ var (
 	ErrUsernameAlreadyExists = errors.New("username already exists")
 	ErrUserNotFound          = errors.New("user not found")
 	ErrDatabaseError         = errors.New("database error")
+	ErrTransactionError      = errors.New("failed to start transaction")
 )
 
 // IsUniqueViolationError проверяет, является ли ошибка ошибкой уникальности

@@ -180,6 +180,53 @@ func (adapter *PostgresAdapter) UpdateUsername(userID uuid.UUID, newUsername str
 	return oldUsername, nil
 }
 
+func (adapter *PostgresAdapter) DeleteUser(userID uuid.UUID) error {
+	tx, err := adapter.db.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %#v\n", err)
+		return ErrTransactionError
+	}
+	defer tx.Rollback()
+
+	// 1. Проверяем существование с блокировкой строки
+	checkUserExistsQuery := `
+		SELECT EXISTS(SELECT 1 FROM users WHERE uuid = $1)
+	`
+	var exists bool
+	err = tx.QueryRow(checkUserExistsQuery, userID).Scan(&exists)
+	if err != nil {
+		fmt.Printf("Failed to find user: %#v\n", err)
+		return ErrDatabaseError
+	}
+	if !exists {
+		return ErrUserNotFound
+	}
+
+	// 2. Удаляем связи
+	deleteRelationsQuery := `
+		DELETE FROM rooms_users_relations
+		WHERE member_uuid = $1
+	`
+	_, err = tx.Exec(deleteRelationsQuery, userID)
+	if err != nil {
+		fmt.Printf("Failed to delete user relations: %#v\n", err)
+		return ErrDatabaseError
+	}
+
+	// 3. Удаляем пользователя
+	deleteUserQuery := `
+		DELETE FROM users
+		WHERE uuid = $1
+	`
+	_, err = tx.Exec(deleteUserQuery, userID)
+	if err != nil {
+		return ErrDatabaseError
+	}
+
+	// 4. Коммитим транзакцию
+	return tx.Commit()
+}
+
 // parseInsertError парсит ошибку INSERT и возвращает кастомную ошибку
 func (adapter *PostgresAdapter) parseInsertError(err error) error {
 	var pqErr *pq.Error

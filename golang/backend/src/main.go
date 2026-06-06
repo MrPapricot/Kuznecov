@@ -86,6 +86,7 @@ func main() {
 	app.Get("/api/user/info", user_handler.GetUserInfoHandler)
 	app.Patch("/api/user/change-username", user_handler.ChangeUsernameHandler)
 	app.Patch("/api/user/change-password", user_handler.ChangePasswordHandler)
+	app.Post("/api/user/delete", user_handler.DeleteUserHandler)
 
 	main_host := utils.ReadEnv("MAIN_HOST", "0.0.0.0")
 	main_port := utils.ReadEnvU16("MAIN_PORT", 8080)

@@ -83,3 +83,29 @@ func (handler *UserHandlers) ChangePasswordHandler(ctx fiber.Ctx) error {
 
 	return ctx.Status(resp.StatusCode).Send(resp.Body)
 }
+
+// DeleteUserHandler POST /api/user/delete
+func (handler *UserHandlers) DeleteUserHandler(ctx fiber.Ctx) error {
+	token := ctx.Get("Authorization")
+	if token == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"Error": "No Authorization provided through headers"})
+	}
+
+	// Парсим тело запроса
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := ctx.Bind().Body(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Error": "Invalid request body"})
+	}
+	if req.Password == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"Error": "password is required"})
+	}
+
+	resp, err := handler.user_service_client.DeleteUser(token, req)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{"Error": "User service unavailable"})
+	}
+
+	return ctx.Status(resp.StatusCode).Send(resp.Body)
+}

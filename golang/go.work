@@ -6,3 +6,4 @@ use ./auth_service
 use ./utils
 use ./shared
 use ./user_service
+use ./room_service

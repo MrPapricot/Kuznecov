@@ -64,6 +64,8 @@ func main() {
 
 	app.Patch("/update_password", handler.ChangePasswordHandler)
 
+	app.Post("/delete", handler.DeleteUserHandler)
+
 	fmt.Println("Start serving")
 
 	app.Listen(fmt.Sprintf("%s:%d", "0.0.0.0", user_port))

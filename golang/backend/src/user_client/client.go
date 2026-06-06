@@ -52,6 +52,15 @@ func (client *UserServiceClient) ChangePassword(token string, body any) (*Respon
 	return client.doRequest("PATCH", "/update_password", token, json_body)
 }
 
+// DeleteUser проксирует POST /user/delete
+func (client *UserServiceClient) DeleteUser(token string, body any) (*Response, error) {
+	json_body, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+	return client.doRequest("POST", "/delete", token, json_body)
+}
+
 // doRequest выполняет HTTP запрос к User Service
 func (client *UserServiceClient) doRequest(method, path, token string, body []byte) (*Response, error) {
 	url := client.base_url + path
