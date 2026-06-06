@@ -47,6 +47,37 @@ services:
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_REQUEST_TOPIC:?}
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server ${KAFKA_HOST:?}:${KAFKA_PORT:?} --create --if-not-exists --topic ${KAFKA_RESPONSE_TOPIC:?}
       "
+  user_service:
+    build:
+      context: ../golang/
+      dockerfile: user_service/Dockerfile
+      target: start
+    depends_on:
+      init_kafka:
+        condition: service_completed_successfully
+      psql:
+        condition: service_healthy
+    environment:
+      DB_USER: ${DB_USER:?}
+      DB_USER_PASSWORD: ${DB_USER_PASSWORD:?}
+      DB_NAME: ${DB_NAME:?}
+      DB_PORT: ${DB_PORT:?}
+      DB_HOST: ${DB_HOST:?}
+
+      JWT_SECRET: ${JWT_SECRET:?}
+
+      USER_HOST: ${USER_HOST:?}
+      USER_PORT: ${USER_PORT:?}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:$$USER_PORT/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+    ports:
+      - "8001:8001"
+
   auth_service:
     build:
       context: ../golang/
@@ -60,6 +91,8 @@ services:
     environment:
       KAFKA_HOST: ${KAFKA_HOST:?}
       KAFKA_PORT: ${KAFKA_PORT:?}
+
+      JWT_SECRET: ${JWT_SECRET:?}
 
       KAFKA_HEALTH_TOPIC: ${KAFKA_HEALTH_TOPIC:?}
       KAFKA_REQUEST_TOPIC: ${KAFKA_REQUEST_TOPIC:?}
@@ -81,6 +114,8 @@ services:
     depends_on:
       init_kafka:
         condition: service_completed_successfully
+      user_service:
+        condition: service_healthy
     environment:
       KAFKA_HOST: ${KAFKA_HOST:?}
       KAFKA_PORT: ${KAFKA_PORT:?}
@@ -91,6 +126,9 @@ services:
 
       MAIN_PORT: ${MAIN_PORT:?}
       MAIN_HOST: ${MAIN_HOST:?}
+
+      USER_HOST: ${USER_HOST:?}
+      USER_PORT: ${USER_PORT:?}
 
     ports:
       - "${MAIN_PORT:?}:${MAIN_PORT:?}"

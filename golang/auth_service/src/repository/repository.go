@@ -27,11 +27,11 @@ func NewUserRepository(adapter *db_adapter.PostgresAdapter) *UserRepository {
 }
 
 // Create создаёт пользователя и возвращает его UUID
-func (r *UserRepository) Create(username, email, password string) (string, error) {
+func (r *UserRepository) Create(username, email, password string) (uuid.UUID, error) {
 	// Хешируем пароль
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	if err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	body := db_adapter.CreateUserBody{
@@ -45,15 +45,15 @@ func (r *UserRepository) Create(username, email, password string) (string, error
 		// Транслируем ошибки адаптера в ошибки репозитория
 		switch {
 		case errors.Is(err, db_adapter.ErrEmailAlreadyExists):
-			return "", ErrEmailAlreadyExists
+			return uuid.Nil, ErrEmailAlreadyExists
 		case errors.Is(err, db_adapter.ErrUsernameAlreadyExists):
-			return "", ErrUsernameAlreadyExists
+			return uuid.Nil, ErrUsernameAlreadyExists
 		default:
-			return "", err
+			return uuid.Nil, err
 		}
 	}
 
-	return userID.String(), nil
+	return userID, nil
 }
 
 // GetUserByEmail возвращает UUID и хеш пароля пользователя

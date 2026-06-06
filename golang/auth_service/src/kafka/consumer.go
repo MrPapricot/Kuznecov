@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 
 	"auth_service/src/service"
 
-	shared "shared/auth"
+	shared "shared/user_data"
 )
 
 type KafkaConsumer struct {
@@ -18,6 +19,8 @@ type KafkaConsumer struct {
 	writer      *kafka.Writer
 	authService *service.AuthService
 }
+
+const timeout time.Duration = time.Millisecond * 20
 
 func NewKafkaConsumer(
 	brokers []string,
@@ -60,6 +63,8 @@ func (c *KafkaConsumer) Start(ctx context.Context) {
 			log.Printf("Error fetching message: %v", err)
 			continue
 		}
+
+		time.Sleep(timeout)
 
 		// Обрабатываем в горутине
 		go c.handleMessage(ctx, msg)

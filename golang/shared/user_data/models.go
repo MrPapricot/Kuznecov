@@ -1,4 +1,9 @@
-package models
+package user_models
+
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+)
 
 const (
 	RequestTypeRegister = "register"
@@ -22,4 +27,10 @@ type AuthResponse struct {
 	Token         string `json:"token,omitempty"`
 	ExpiresAt     int64  `json:"expires_at,omitempty"` // Unix timestamp
 	UserID        string `json:"user_id,omitempty"`
+}
+
+type TokenClaims struct {
+	UUID  uuid.UUID `json:"uuid"`
+	Email string    `json:"email"`
+	jwt.RegisteredClaims
 }

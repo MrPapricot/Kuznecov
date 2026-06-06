@@ -22,14 +22,14 @@ COPY ./db_adapter/src ./db_adapter/src
 COPY ./backend/go.mod ./backend/go.mod
 COPY ./backend/src ./backend/src
 
-WORKDIR /usr/src/app/auth_service
+WORKDIR /usr/src/app/user_service
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/auth_service ./src
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/user_service ./src
 
 FROM alpine:3.17 AS start
 
-COPY --from=builder /usr/src/app/auth_service/target/auth_service /usr/local/bin/auth_service
+COPY --from=builder /usr/src/app/user_service/target/user_service /usr/local/bin/user_service
 
-CMD ["auth_service"]
+CMD ["user_service"]

@@ -5,11 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
+
+type UserInfo struct {
+	UserName  string
+	Email     string
+	CreatedAt time.Time
+}
 
 type CreateUserBody struct {
 	UserName     string
@@ -84,6 +91,95 @@ func (adapter *PostgresAdapter) GetUserByEmail(email string) (uuid.UUID, string,
 	return userID, passwordHash, nil
 }
 
+func (adapter *PostgresAdapter) GetUserInfo(uuid uuid.UUID) (UserInfo, error) {
+	query := `
+		SELECT username, email, created_at
+		FROM users
+		WHERE uuid = $1
+	`
+	var user_info UserInfo
+
+	err := adapter.db.QueryRow(query, uuid).Scan(&user_info.UserName, &user_info.Email, &user_info.CreatedAt)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return UserInfo{}, ErrUserNotFound
+		}
+		fmt.Printf("%#v\n", err)
+		return UserInfo{}, ErrDatabaseError
+	}
+
+	fmt.Printf("User_Info: %#v\n", user_info)
+
+	return user_info, nil
+}
+
+func (adapter *PostgresAdapter) GetPasswordHash(userID uuid.UUID) (string, error) {
+	query := `SELECT password_hash FROM users WHERE uuid = $1`
+	var passwordHash string
+	err := adapter.db.QueryRow(query, userID).Scan(&passwordHash)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrUserNotFound
+		}
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+	return passwordHash, nil
+}
+
+func (adapter *PostgresAdapter) UpdatePasswordHash(userID uuid.UUID, password_hash string) error {
+	query := `UPDATE users SET password_hash = $1 WHERE uuid = $2`
+	result, err := adapter.db.Exec(query, password_hash, userID)
+	if err != nil {
+		fmt.Printf("Error: %#v\n", err)
+		return ErrDatabaseError
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		fmt.Printf("Error: %#v\n", err)
+		return ErrDatabaseError
+	}
+	if rowsAffected == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
+}
+
+func (adapter *PostgresAdapter) UpdateUsername(userID uuid.UUID, newUsername string) (string, error) {
+	// Сначала получаем текущее имя
+	var oldUsername string
+	err := adapter.db.QueryRow("SELECT username FROM users WHERE uuid = $1", userID).Scan(&oldUsername)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrUserNotFound
+		}
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+
+	// Обновляем имя
+	query := `UPDATE users SET username = $1 WHERE uuid = $2`
+	result, err := adapter.db.Exec(query, newUsername, userID)
+	if err != nil {
+		// Обрабатываем ошибку уникальности
+		if parsedErr := adapter.parseUpdateError(err); parsedErr != nil {
+			return "", parsedErr
+		}
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+	if rowsAffected == 0 {
+		return "", ErrUserNotFound
+	}
+
+	return oldUsername, nil
+}
+
 // parseInsertError парсит ошибку INSERT и возвращает кастомную ошибку
 func (adapter *PostgresAdapter) parseInsertError(err error) error {
 	var pqErr *pq.Error
@@ -117,6 +213,29 @@ func (adapter *PostgresAdapter) parseInsertError(err error) error {
 			return fmt.Errorf("%w: unique violation on %s", ErrDatabaseError, pqErr.Constraint)
 		}
 	}
+}
+
+func (adapter *PostgresAdapter) parseUpdateError(err error) error {
+	var pqErr *pq.Error
+	if !errors.As(err, &pqErr) {
+		return nil
+	}
+
+	if pqErr.Code != "23505" {
+		return nil
+	}
+
+	constraintName := strings.ToLower(pqErr.Constraint)
+	if strings.Contains(constraintName, "username") || strings.Contains(constraintName, "user_name") {
+		return ErrUsernameAlreadyExists
+	}
+
+	detail := strings.ToLower(pqErr.Detail)
+	if strings.Contains(detail, "username") {
+		return ErrUsernameAlreadyExists
+	}
+
+	return fmt.Errorf("%w: unique violation on %s", ErrDatabaseError, pqErr.Constraint)
 }
 
 // HealthCheck проверяет подключение к БД

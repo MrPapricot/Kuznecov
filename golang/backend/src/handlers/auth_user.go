@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	shared "shared/auth"
+	shared "shared/user_data"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"

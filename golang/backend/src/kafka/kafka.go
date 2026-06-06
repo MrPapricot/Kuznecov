@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	shared "shared/auth"
+	shared "shared/user_data"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -87,9 +87,13 @@ func (c *KafkaClient) SendRequest(ctx context.Context, req shared.AuthRequest, t
 	}
 }
 
+const timeout time.Duration = time.Microsecond * 20
+
 // readResponses читает ответы из Kafka и направляет их в нужные каналы
 func (c *KafkaClient) readResponses() {
 	for {
+		time.Sleep(timeout)
+
 		msg, err := c.reader.FetchMessage(context.Background())
 		if err != nil {
 			log.Printf("Error reading response: %v", err)

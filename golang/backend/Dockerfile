@@ -4,7 +4,10 @@ WORKDIR /usr/src/app
 
 COPY ./go.work ./go.work
 
-COPY ./shared/auth ./shared/auth
+COPY ./user_service/go.mod ./user_service/go.mod
+COPY ./user_service/src ./user_service/src
+
+COPY ./shared/user_data ./shared/user_data
 COPY ./shared/go.mod ./shared/go.mod
 
 COPY ./utils/go.mod ./utils/go.mod

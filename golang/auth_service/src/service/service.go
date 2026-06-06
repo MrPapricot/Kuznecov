@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"auth_service/src/repository"
-	shared "shared/auth"
+	shared "shared/user_data"
+	user_models "shared/user_data"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type AuthService struct {
@@ -48,7 +50,7 @@ func (s *AuthService) Register(username, email, password string) (shared.AuthRes
 		Success:   true,
 		Token:     token,
 		ExpiresAt: expiresAt.Unix(),
-		UserID:    userID,
+		UserID:    userID.String(),
 	}, nil
 }
 
@@ -75,7 +77,7 @@ func (s *AuthService) Login(email, password string) (shared.AuthResponse, error)
 	}
 
 	// 3. Генерируем JWT (аналог get_jwt_token)
-	token, expiresAt, err := s.generateToken(userID.String(), email)
+	token, expiresAt, err := s.generateToken(userID, email)
 	if err != nil {
 		return shared.AuthResponse{Success: false, Error: "Failed to generate token"}, err
 	}
@@ -89,14 +91,16 @@ func (s *AuthService) Login(email, password string) (shared.AuthResponse, error)
 }
 
 // generateToken создаёт JWT с UUID пользователя и сроком действия
-func (s *AuthService) generateToken(userID, email string) (string, time.Time, error) {
+func (s *AuthService) generateToken(userID uuid.UUID, email string) (string, time.Time, error) {
 	expiresAt := time.Now().Add(s.tokenTTL)
 
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"email":   email,
-		"exp":     expiresAt.Unix(),
-		"iat":     time.Now().Unix(),
+	claims := user_models.TokenClaims{
+		UUID:  userID,
+		Email: email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
