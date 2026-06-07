@@ -1,6 +1,7 @@
 package main
 
 import (
+	client "MainBackend/src/character_client"
 	"MainBackend/src/handlers"
 	"MainBackend/src/room_client"
 	"MainBackend/src/user_client"
@@ -101,6 +102,13 @@ func main() {
 	room_service_client := room_client.NewRoomServiceClient(room_service_url, room_service_timeout)
 	room_handler := handlers.NewRoomHandlers(room_service_client)
 	// -----------
+	// Character Client
+	character_service_timeout := 10 * time.Second
+	character_service_url := fmt.Sprintf("http://%s:%d", utils.ReadEnv("CHARACTER_HOST", "localhost"), utils.ReadEnvU16("CHARACTER_PORT", 8002))
+
+	character_service_client := client.NewCharacterServiceClient(character_service_url, character_service_timeout)
+	character_handler := handlers.NewCharacterHandlers(character_service_client)
+	// -----------
 
 	app := fiber.New(fiber.Config{AppName: "API Gateway"})
 
@@ -127,6 +135,13 @@ func main() {
 	app.Delete("/api/room/:uuid", room_handler.DeleteRoomHandler) // ✅ DELETE метод
 	app.Get("/api/room/owned", room_handler.GetOwnedRoomsHandler)
 	app.Get("/api/room/joined", room_handler.GetJoinedRoomsHandler)
+
+	app.Post("/api/character/create", character_handler.CreateCharacterHandler)
+	app.Patch("/api/character/update-name/:uuid", character_handler.UpdateNameHandler)
+	app.Patch("/api/character/update-description/:uuid", character_handler.UpdateDescriptionHandler)
+	app.Delete("/api/character/:uuid", character_handler.DeleteCharacterHandler)
+	app.Post("/api/character/level-up/:uuid", character_handler.LevelUpHandler)
+	app.Get("/api/character/info/:uuid", character_handler.GetCharacterInfoHandler)
 
 	main_host := utils.ReadEnv("MAIN_HOST", "0.0.0.0")
 	main_port := utils.ReadEnvU16("MAIN_PORT", 8080)

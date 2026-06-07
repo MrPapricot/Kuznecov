@@ -7,3 +7,4 @@ use ./utils
 use ./shared
 use ./user_service
 use ./room_service
+use ./character_service
