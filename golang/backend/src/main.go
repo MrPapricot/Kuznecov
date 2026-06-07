@@ -2,6 +2,7 @@ package main
 
 import (
 	"MainBackend/src/handlers"
+	"MainBackend/src/room_client"
 	"MainBackend/src/user_client"
 	"context"
 	"fmt"
@@ -14,8 +15,22 @@ import (
 
 	"github.com/segmentio/kafka-go"
 
+	_ "MainBackend/docs"
+
+	swaggo "github.com/gofiber/contrib/v3/swaggo"
+
 	kafka_adapter "MainBackend/src/kafka"
 )
+
+// @title Gateway API
+// @version 1.0
+// @description API Gateway для управления аутентификацией, пользователями и комнатами.
+// @host localhost:8000
+// @BasePath /
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+// @securityDefinitions.apikey.description Введите токен в формате: Bearer <ваш_токен> или просто <ваш_токен>
 
 type Response struct {
 	Message string `json:"message"`
@@ -69,15 +84,29 @@ func main() {
 
 	fmt.Println("All services started successfully")
 
+	// -----------
+	// User Client
 	user_service_timeout := 10 * time.Second
 	user_service_url := fmt.Sprintf("http://%s:%d", utils.ReadEnv("USER_HOST", "localhost"), utils.ReadEnvU16("USER_PORT", 8001))
 
 	user_service_client := user_client.NewUserServiceClient(user_service_url, user_service_timeout)
 	user_handler := handlers.NewUserHandler(user_service_client)
+	// -----------
+
+	// -----------
+	// Room Client
+	room_service_timeout := 10 * time.Second
+	room_service_url := fmt.Sprintf("http://%s:%d", utils.ReadEnv("ROOM_HOST", "localhost"), utils.ReadEnvU16("ROOM_PORT", 8001))
+
+	room_service_client := room_client.NewRoomServiceClient(room_service_url, room_service_timeout)
+	room_handler := handlers.NewRoomHandlers(room_service_client)
+	// -----------
 
 	app := fiber.New(fiber.Config{AppName: "API Gateway"})
 
 	app.Get("/health", handlers.HealthHandler)
+
+	app.Get("/swagger/*", swaggo.HandlerDefault)
 
 	app.Post("/api/auth/register", auth_handler.Register)
 	app.Post("/api/auth/login", auth_handler.Login)
@@ -87,6 +116,17 @@ func main() {
 	app.Patch("/api/user/change-username", user_handler.ChangeUsernameHandler)
 	app.Patch("/api/user/change-password", user_handler.ChangePasswordHandler)
 	app.Post("/api/user/delete", user_handler.DeleteUserHandler)
+
+	// Room routes (через HTTP прокси)
+	app.Post("/api/room/create", room_handler.CreateRoomHandler)
+	app.Post("/api/room/add-members/:uuid", room_handler.AddMembersHandler)
+	app.Get("/api/room/info/:uuid", room_handler.GetRoomInfoHandler)
+	app.Post("/api/room/remove-members/:uuid", room_handler.RemoveMembersHandler)
+	app.Patch("/api/room/update-name/:uuid", room_handler.UpdateRoomNameHandler)
+	app.Patch("/api/room/update-description/:uuid", room_handler.UpdateRoomDescriptionHandler)
+	app.Delete("/api/room/:uuid", room_handler.DeleteRoomHandler) // ✅ DELETE метод
+	app.Get("/api/room/owned", room_handler.GetOwnedRoomsHandler)
+	app.Get("/api/room/joined", room_handler.GetJoinedRoomsHandler)
 
 	main_host := utils.ReadEnv("MAIN_HOST", "0.0.0.0")
 	main_port := utils.ReadEnvU16("MAIN_PORT", 8080)

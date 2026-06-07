@@ -75,8 +75,33 @@ services:
       retries: 5
       start_period: 5s
 
-    ports:
-      - "8001:8001"
+  room_service:
+    build:
+      context: ../golang/
+      dockerfile: room_service/Dockerfile
+      target: start
+    depends_on:
+      init_kafka:
+        condition: service_completed_successfully
+      psql:
+        condition: service_healthy
+    environment:
+      DB_USER: ${DB_USER:?}
+      DB_USER_PASSWORD: ${DB_USER_PASSWORD:?}
+      DB_NAME: ${DB_NAME:?}
+      DB_PORT: ${DB_PORT:?}
+      DB_HOST: ${DB_HOST:?}
+
+      JWT_SECRET: ${JWT_SECRET:?}
+
+      ROOM_HOST: ${ROOM_HOST:?}
+      ROOM_PORT: ${ROOM_PORT:?}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:$$ROOM_PORT/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   auth_service:
     build:
@@ -129,6 +154,9 @@ services:
 
       USER_HOST: ${USER_HOST:?}
       USER_PORT: ${USER_PORT:?}
+
+      ROOM_HOST: ${ROOM_HOST:?}
+      ROOM_PORT: ${ROOM_PORT:?}
 
     ports:
       - "${MAIN_PORT:?}:${MAIN_PORT:?}"

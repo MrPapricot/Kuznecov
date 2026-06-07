@@ -2,8 +2,6 @@ FROM golang:1.26.2 AS builder
 
 WORKDIR /usr/src/app
 
-RUN go install github.com/swaggo/swag/cmd/swag@latest
-
 COPY ./go.work ./go.work
 
 COPY ./room_service/go.mod ./room_service/go.mod
@@ -27,18 +25,14 @@ COPY ./db_adapter/src ./db_adapter/src
 COPY ./backend/go.mod ./backend/go.mod
 COPY ./backend/src ./backend/src
 
-WORKDIR /usr/src/app/backend
+WORKDIR /usr/src/app/room_service
 
 RUN go mod download
 
-RUN swag init -g src/main.go -o ./docs
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/backend ./src
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/room_service ./src
 
 FROM alpine:3.17 AS start
 
-COPY --from=builder /usr/src/app/backend/target/backend /usr/local/bin/backend
+COPY --from=builder /usr/src/app/room_service/target/room_service /usr/local/bin/room_service
 
-COPY --from=builder /usr/src/app/backend/docs /usr/local/bin/docs
-
-CMD ["backend"]
+CMD ["room_service"]

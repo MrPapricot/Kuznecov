@@ -4,6 +4,9 @@ WORKDIR /usr/src/app
 
 COPY ./go.work ./go.work
 
+COPY ./room_service/go.mod ./room_service/go.mod
+COPY ./room_service/src ./room_service/src
+
 COPY ./user_service/go.mod ./user_service/go.mod
 COPY ./user_service/src ./user_service/src
 

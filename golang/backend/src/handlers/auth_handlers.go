@@ -33,6 +33,16 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// Login godoc
+// @Summary Вход в систему
+// @Description Аутентифицирует пользователя и возвращает JWT токен
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body object true "Данные для входа"
+// @Success 200 {object} object "Успешный вход"
+// @Failure 401 {object} object "Неверные учетные данные"
+// @Router /api/auth/login [post]
 func (h *AuthHandler) Login(c fiber.Ctx) error {
 	var req LoginRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -62,7 +72,16 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 	})
 }
 
-// Register обрабатывает POST /api/auth/register
+// Register godoc
+// @Summary Регистрация пользователя
+// @Description Создает нового пользователя и возвращает JWT токен
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body object true "Данные для регистрации"
+// @Success 201 {object} object "Успешная регистрация"
+// @Failure 400 {object} object "Ошибка валидации"
+// @Router /api/auth/register [post]
 func (h *AuthHandler) Register(c fiber.Ctx) error {
 	var req RegisterRequest
 

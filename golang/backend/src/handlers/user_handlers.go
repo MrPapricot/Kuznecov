@@ -16,7 +16,15 @@ func NewUserHandler(user_service_client *user_client.UserServiceClient) *UserHan
 	}
 }
 
-// GetUserInfoHandler GET /api/user/info
+// GetUserInfoHandler godoc
+// @Summary Получить информацию о пользователе
+// @Description Возвращает email, username и дату создания
+// @Tags Users
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} object "Данные пользователя"
+// @Failure 401 {object} object "Неавторизован"
+// @Router /api/user/info [get]
 func (handler *UserHandlers) GetUserInfoHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	if token == "" {
@@ -31,7 +39,19 @@ func (handler *UserHandlers) GetUserInfoHandler(ctx fiber.Ctx) error {
 	return ctx.Status(resp.StatusCode).Send(resp.Body)
 }
 
-// ChangeUsernameHandler POST /api/user/change-username
+// ChangeUsernameHandler godoc
+// @Summary Изменить имя пользователя
+// @Description Обновляет username. Возвращает старое и новое имя.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body object true "Новое имя пользователя" example({"new_username": "new_cool_name"})
+// @Success 200 {object} object "Успешное изменение" example({"old_username": "johndoe", "new_username": "new_cool_name"})
+// @Failure 400 {object} object "Новое имя не указано" example({"Error": "new_username is required"})
+// @Failure 401 {object} object "Невалидный токен" example({"Error": "Invalid token format"})
+// @Failure 409 {object} object "Имя уже занято" example({"Error": "Username already exists"})
+// @Router /api/user/change-username [post]
 func (handler *UserHandlers) ChangeUsernameHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	if token == "" {
@@ -57,7 +77,18 @@ func (handler *UserHandlers) ChangeUsernameHandler(ctx fiber.Ctx) error {
 	return ctx.Status(resp.StatusCode).Send(resp.Body)
 }
 
-// ChangePasswordHandler POST /api/user/change-password
+// DeleteUserHandler godoc
+// @Summary Удалить аккаунт пользователя
+// @Description Полностью удаляет пользователя и все его связи. Требует подтверждения текущим паролем.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body object true "Пароль для подтверждения удаления" example({"password": "securePassword123"})
+// @Success 200 {object} object "Успешное удаление" example({"message": "User deleted successfully"})
+// @Failure 400 {object} object "Неверный пароль" example({"Error": "Incorrect old password"})
+// @Failure 401 {object} object "Невалидный токен" example({"Error": "Invalid token format"})
+// @Router /api/user/delete [post]
 func (handler *UserHandlers) ChangePasswordHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	if token == "" {

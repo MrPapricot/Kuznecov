@@ -285,6 +285,15 @@ func (adapter *PostgresAdapter) parseUpdateError(err error) error {
 	return fmt.Errorf("%w: unique violation on %s", ErrDatabaseError, pqErr.Constraint)
 }
 
+func (adapter *PostgresAdapter) UserExists(userUUID uuid.UUID) (bool, error) {
+	var exists bool
+	err := adapter.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM users WHERE uuid = $1)`, userUUID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+	return exists, nil
+}
+
 // HealthCheck проверяет подключение к БД
 func (adapter *PostgresAdapter) HealthCheck() error {
 	return adapter.db.Ping()

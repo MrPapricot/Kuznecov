@@ -11,6 +11,7 @@ var (
 	ErrUserNotFound          = errors.New("user not found")
 	ErrDatabaseError         = errors.New("database error")
 	ErrTransactionError      = errors.New("failed to start transaction")
+	ErrRoomNotFound          = errors.New("room not found")
 )
 
 // IsUniqueViolationError проверяет, является ли ошибка ошибкой уникальности
