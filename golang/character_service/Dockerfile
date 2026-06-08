@@ -4,6 +4,9 @@ WORKDIR /usr/src/app
 
 COPY ./go.work ./go.work
 
+COPY ./stats_service/go.mod ./stats_service/go.mod
+COPY ./stats_service/src ./stats_service/src
+
 COPY ./character_service/go.mod ./character_service/go.mod
 COPY ./character_service/src ./character_service/src
 

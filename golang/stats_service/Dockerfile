@@ -2,10 +2,10 @@ FROM golang:1.26.2 AS builder
 
 WORKDIR /usr/src/app
 
-COPY ./go.work ./go.work
 
 COPY ./stats_service/go.mod ./stats_service/go.mod
 COPY ./stats_service/src ./stats_service/src
+COPY ./go.work ./go.work
 
 COPY ./character_service/go.mod ./character_service/go.mod
 COPY ./character_service/src ./character_service/src
@@ -31,14 +31,14 @@ COPY ./db_adapter/src ./db_adapter/src
 COPY ./backend/go.mod ./backend/go.mod
 COPY ./backend/src ./backend/src
 
-WORKDIR /usr/src/app/user_service
+WORKDIR /usr/src/app/stats_service
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/user_service ./src
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./target/stats_service ./src
 
 FROM alpine:3.17 AS start
 
-COPY --from=builder /usr/src/app/user_service/target/user_service /usr/local/bin/user_service
+COPY --from=builder /usr/src/app/stats_service/target/stats_service /usr/local/bin/stats_service
 
-CMD ["user_service"]
+CMD ["stats_service"]

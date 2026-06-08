@@ -4,6 +4,7 @@ import (
 	client "MainBackend/src/character_client"
 	"MainBackend/src/handlers"
 	"MainBackend/src/room_client"
+	"MainBackend/src/stats_client"
 	"MainBackend/src/user_client"
 	"context"
 	"fmt"
@@ -109,6 +110,13 @@ func main() {
 	character_service_client := client.NewCharacterServiceClient(character_service_url, character_service_timeout)
 	character_handler := handlers.NewCharacterHandlers(character_service_client)
 	// -----------
+	// Stats Client
+	stats_service_timeout := 10 * time.Second
+	stats_service_url := fmt.Sprintf("http://%s:%d", utils.ReadEnv("STATS_HOST", "localhost"), utils.ReadEnvU16("STATS_PORT", 8002))
+
+	stats_service_client := stats_client.NewStatsServiceClient(stats_service_url, stats_service_timeout)
+	stats_handler := handlers.NewStatsHandlers(stats_service_client)
+	// -----------
 
 	app := fiber.New(fiber.Config{AppName: "API Gateway"})
 
@@ -142,6 +150,9 @@ func main() {
 	app.Delete("/api/character/:uuid", character_handler.DeleteCharacterHandler)
 	app.Post("/api/character/level-up/:uuid", character_handler.LevelUpHandler)
 	app.Get("/api/character/info/:uuid", character_handler.GetCharacterInfoHandler)
+
+	app.Get("/api/stats/global", stats_handler.GetGlobalStatsHandler)
+	app.Get("/api/stats/user", stats_handler.GetUserStatsHandler)
 
 	main_host := utils.ReadEnv("MAIN_HOST", "0.0.0.0")
 	main_port := utils.ReadEnvU16("MAIN_PORT", 8080)
