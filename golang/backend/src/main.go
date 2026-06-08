@@ -26,13 +26,13 @@ import (
 
 // @title Gateway API
 // @version 1.0
-// @description API Gateway для управления аутентификацией, пользователями и комнатами.
-// @host localhost:8000
+// @description Полноценный API Gateway для управления аутентификацией, пользователями, комнатами, персонажами и статистикой.
+// @host localhost:8080
 // @BasePath /
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
-// @securityDefinitions.apikey.description Введите токен в формате: Bearer <ваш_токен> или просто <ваш_токен>
+// @securityDefinitions.apikey.description Введите ваш JWT токен.
 
 type Response struct {
 	Message string `json:"message"`

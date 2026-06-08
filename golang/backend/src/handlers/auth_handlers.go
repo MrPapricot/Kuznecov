@@ -22,26 +22,15 @@ func NewAuthHandler(kafkaClient *kafka_adapter.KafkaClient, timeout time.Duratio
 	}
 }
 
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 // Login godoc
-// @Summary Вход в систему
-// @Description Аутентифицирует пользователя и возвращает JWT токен
+// @Summary Вход в систему (Логин)
+// @Description Аутентифицирует пользователя по email и паролю, возвращает JWT токен
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body object true "Данные для входа"
-// @Success 200 {object} object "Успешный вход"
-// @Failure 401 {object} object "Неверные учетные данные"
+// @Param request body handlers.LoginRequest true "Данные для входа"
+// @Success 200 {object} object "Успешный вход" example({"token": "eyJhbG...", "expires_at": 1717600000, "user_id": "550e8400-..."})
+// @Failure 401 {object} object "Неверные учетные данные" example({"Error": "Invalid credentials"})
 // @Router /api/auth/login [post]
 func (h *AuthHandler) Login(c fiber.Ctx) error {
 	var req LoginRequest
@@ -73,14 +62,14 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 }
 
 // Register godoc
-// @Summary Регистрация пользователя
-// @Description Создает нового пользователя и возвращает JWT токен
+// @Summary Регистрация нового пользователя
+// @Description Создает аккаунт пользователя и возвращает JWT токен
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body object true "Данные для регистрации"
-// @Success 201 {object} object "Успешная регистрация"
-// @Failure 400 {object} object "Ошибка валидации"
+// @Param request body handlers.RegisterRequest true "Данные для регистрации"
+// @Success 201 {object} object "Успешная регистрация" example({"token": "eyJhbG...", "expires_at": 1717600000, "user_id": "550e8400-..."})
+// @Failure 400 {object} object "Ошибка валидации" example({"Error": "Email already registered"})
 // @Router /api/auth/register [post]
 func (h *AuthHandler) Register(c fiber.Ctx) error {
 	var req RegisterRequest

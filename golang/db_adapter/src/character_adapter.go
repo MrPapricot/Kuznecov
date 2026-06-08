@@ -84,25 +84,43 @@ func (adapter *PostgresAdapter) CheckUserIsCharacterOwner(charUUID, userUUID uui
 
 func (adapter *PostgresAdapter) UpdateCharacterName(charUUID uuid.UUID, newName string) (string, error) {
 	var oldName string
-	err := adapter.db.QueryRow(`UPDATE characters SET name = $1 WHERE char_uuid = $2 RETURNING name`, newName, charUUID).Scan(&oldName)
+
+	// 1. Сначала получаем текущее (старое) имя
+	err := adapter.db.QueryRow(`SELECT name FROM characters WHERE char_uuid = $1`, charUUID).Scan(&oldName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", ErrCharacterNotFound
 		}
 		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
 	}
+
+	// 2. Затем выполняем обновление
+	_, err = adapter.db.Exec(`UPDATE characters SET name = $1 WHERE char_uuid = $2`, newName, charUUID)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+
 	return oldName, nil
 }
 
 func (adapter *PostgresAdapter) UpdateCharacterDescription(charUUID uuid.UUID, newDesc string) (string, error) {
 	var oldDesc sql.NullString
-	err := adapter.db.QueryRow(`UPDATE characters SET character_description = $1 WHERE char_uuid = $2 RETURNING character_description`, nullString(newDesc), charUUID).Scan(&oldDesc)
+
+	// 1. Сначала получаем текущее (старое) описание
+	err := adapter.db.QueryRow(`SELECT character_description FROM characters WHERE char_uuid = $1`, charUUID).Scan(&oldDesc)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", ErrCharacterNotFound
 		}
 		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
 	}
+
+	// 2. Затем выполняем обновление
+	_, err = adapter.db.Exec(`UPDATE characters SET character_description = $1 WHERE char_uuid = $2`, nullString(newDesc), charUUID)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrDatabaseError, err)
+	}
+
 	return oldDesc.String, nil
 }
 

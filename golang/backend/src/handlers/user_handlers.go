@@ -18,12 +18,12 @@ func NewUserHandler(user_service_client *user_client.UserServiceClient) *UserHan
 
 // GetUserInfoHandler godoc
 // @Summary Получить информацию о пользователе
-// @Description Возвращает email, username и дату создания
+// @Description Возвращает username, email и дату создания аккаунта
 // @Tags Users
 // @Produce json
 // @Security ApiKeyAuth
-// @Success 200 {object} object "Данные пользователя"
-// @Failure 401 {object} object "Неавторизован"
+// @Success 200 {object} object "Данные пользователя" example({"username": "johndoe", "email": "john@example.com", "created_at": "2024-06-05T12:00:00Z"})
+// @Failure 401 {object} object "Отсутствует или невалидный токен"
 // @Router /api/user/info [get]
 func (handler *UserHandlers) GetUserInfoHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
@@ -115,7 +115,17 @@ func (handler *UserHandlers) ChangePasswordHandler(ctx fiber.Ctx) error {
 	return ctx.Status(resp.StatusCode).Send(resp.Body)
 }
 
-// DeleteUserHandler POST /api/user/delete
+// DeleteUserHandler godoc
+// @Summary Удалить аккаунт пользователя
+// @Description Полностью удаляет пользователя и все его связи. Требует подтверждения текущим паролем.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body handlers.DeleteUserRequest true "Пароль для подтверждения удаления"
+// @Success 200 {object} object "Успешное удаление" example({"message": "User deleted successfully"})
+// @Failure 400 {object} object "Неверный пароль" example({"Error": "Incorrect old password"})
+// @Router /api/user/delete [post]
 func (handler *UserHandlers) DeleteUserHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	if token == "" {
