@@ -20,14 +20,13 @@ func NewCharacterHandlers(charServiceClient *client.CharacterServiceClient) *Cha
 
 // CreateCharacterHandler godoc
 // @Summary Создать нового персонажа
-// @Description Сумма характеристик должна быть равна 40 + (level - 1). Каждая характеристика от 0 до 10.
 // @Tags Character
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param request body handlers.CreateCharacterRequest true "Данные персонажа"
-// @Success 201 {object} object "UUID созданного персонажа" example({"char_uuid": "550e8400-..."})
-// @Failure 400 {object} object "Ошибка валидации суммы очков" example({"Error": "Invalid stat points sum. Must equal 40 + (level - 1)"})
+// @Success 201 {object} handlers.CreateCharacterResponse "UUID созданного персонажа"
+// @Failure 400 {object} handlers.ErrorResponse "Ошибка валидации суммы очков"
 // @Router /api/character/create [post]
 func (h *CharacterHandlers) CreateCharacterHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
@@ -66,14 +65,13 @@ func (h *CharacterHandlers) CreateCharacterHandler(ctx fiber.Ctx) error {
 
 // UpdateNameHandler godoc
 // @Summary Изменить имя персонажа
-// @Description Обновляет имя персонажа. Доступно только владельцу.
 // @Tags Character
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param uuid path string true "UUID персонажа"
 // @Param request body handlers.UpdateCharacterNameRequest true "Новое имя"
-// @Success 200 {object} object "Старое и новое имя" example({"old_name": "Vault Dweller", "new_name": "New Vault Dweller"})
+// @Success 200 {object} handlers.UpdateCharacterNameResponse "Старое и новое имя"
 // @Router /api/character/update-name/{uuid} [patch]
 func (h *CharacterHandlers) UpdateNameHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
@@ -105,14 +103,13 @@ func (h *CharacterHandlers) UpdateNameHandler(ctx fiber.Ctx) error {
 
 // UpdateDescriptionHandler godoc
 // @Summary Изменить описание персонажа
-// @Description Обновляет описание персонажа. Доступно только владельцу.
 // @Tags Character
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param uuid path string true "UUID персонажа"
 // @Param request body handlers.UpdateCharacterDescriptionRequest true "Новое описание"
-// @Success 200 {object} object "Старое и новое описание"
+// @Success 200 {object} handlers.UpdateCharacterDescriptionResponse "Старое и новое описание"
 // @Router /api/character/update-description/{uuid} [patch]
 func (h *CharacterHandlers) UpdateDescriptionHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
@@ -141,11 +138,10 @@ func (h *CharacterHandlers) UpdateDescriptionHandler(ctx fiber.Ctx) error {
 
 // DeleteCharacterHandler godoc
 // @Summary Удалить персонажа
-// @Description Полностью удаляет персонажа. Доступно только владельцу.
 // @Tags Character
 // @Security ApiKeyAuth
 // @Param uuid path string true "UUID персонажа"
-// @Success 200 {object} object "Сообщение об успехе" example({"message": "Character deleted successfully"})
+// @Success 200 {object} handlers.MessageResponse "Сообщение об успехе"
 // @Router /api/character/{uuid} [delete]
 func (h *CharacterHandlers) DeleteCharacterHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
@@ -165,15 +161,17 @@ func (h *CharacterHandlers) DeleteCharacterHandler(ctx fiber.Ctx) error {
 	return ctx.Status(resp.StatusCode).Send(resp.Body)
 }
 
-// GetCharacterInfoHandler godoc
-// @Summary Получить информацию о персонаже
-// @Description Возвращает полные данные персонажа, включая все характеристики SPECIAL. Доступно только владельцу.
+// LevelUpHandler godoc
+// @Summary Прокачать характеристику персонажа
 // @Tags Character
+// @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param uuid path string true "UUID персонажа"
-// @Success 200 {object} object "Полная информация о персонаже"
-// @Router /api/character/info/{uuid} [get]
+// @Param request body handlers.LevelUpCharacterRequest true "Название характеристики"
+// @Success 200 {object} handlers.MessageResponse "Результат прокачки"
+// @Failure 400 {object} handlers.ErrorResponse "Характеристика или уровень на максимуме"
+// @Router /api/character/level-up/{uuid} [post]
 func (h *CharacterHandlers) LevelUpHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")
 	if token == "" {
@@ -204,16 +202,11 @@ func (h *CharacterHandlers) LevelUpHandler(ctx fiber.Ctx) error {
 
 // GetCharacterInfoHandler godoc
 // @Summary Получить информацию о персонаже
-// @Description Возвращает полные данные персонажа, включая все характеристики SPECIAL. Доступно только владельцу.
 // @Tags Character
 // @Produce json
 // @Security ApiKeyAuth
 // @Param uuid path string true "UUID персонажа"
-// @Success 200 {object} object "Полная информация о персонаже" example({"char_uuid": "...", "name": "Vault Dweller", "description": "...", "level": 1, "strength": 5, "perception": 5, "endurance": 5, "charisma": 5, "intelligence": 5, "agility": 5, "luck": 10, "created_at": "2024-06-05T12:00:00Z"})
-// @Failure 400 {object} object "Неверный формат UUID" example({"Error": "Invalid uuid format"})
-// @Failure 401 {object} object "Невалидный токен" example({"Error": "Invalid token format"})
-// @Failure 403 {object} object "Пользователь не является владельцем" example({"Error": "User is not the owner of this character"})
-// @Failure 404 {object} object "Персонаж не найден" example({"Error": "Character not found"})
+// @Success 200 {object} handlers.CharacterInfoResponse "Полная информация о персонаже"
 // @Router /api/character/info/{uuid} [get]
 func (h *CharacterHandlers) GetCharacterInfoHandler(ctx fiber.Ctx) error {
 	token := ctx.Get("Authorization")

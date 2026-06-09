@@ -23,14 +23,14 @@ func NewAuthHandler(kafkaClient *kafka_adapter.KafkaClient, timeout time.Duratio
 }
 
 // Login godoc
-// @Summary Вход в систему (Логин)
-// @Description Аутентифицирует пользователя по email и паролю, возвращает JWT токен
+// @Summary Вход в систему
+// @Description Аутентифицирует пользователя и возвращает JWT токен
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body handlers.LoginRequest true "Данные для входа"
-// @Success 200 {object} object "Успешный вход" example({"token": "eyJhbG...", "expires_at": 1717600000, "user_id": "550e8400-..."})
-// @Failure 401 {object} object "Неверные учетные данные" example({"Error": "Invalid credentials"})
+// @Success 200 {object} handlers.AuthResponse "Успешный вход"
+// @Failure 401 {object} handlers.ErrorResponse "Неверные учетные данные"
 // @Router /api/auth/login [post]
 func (h *AuthHandler) Login(c fiber.Ctx) error {
 	var req LoginRequest
@@ -68,8 +68,8 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param request body handlers.RegisterRequest true "Данные для регистрации"
-// @Success 201 {object} object "Успешная регистрация" example({"token": "eyJhbG...", "expires_at": 1717600000, "user_id": "550e8400-..."})
-// @Failure 400 {object} object "Ошибка валидации" example({"Error": "Email already registered"})
+// @Success 201 {object} handlers.AuthResponse "Успешная регистрация"
+// @Failure 400 {object} handlers.ErrorResponse "Ошибка валидации"
 // @Router /api/auth/register [post]
 func (h *AuthHandler) Register(c fiber.Ctx) error {
 	var req RegisterRequest
